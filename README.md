@@ -1,8 +1,6 @@
 README
 
-Author:     Matthew Aubert
-Twitter:    @aubsec
-Email:      aubsec@gmail.com
+Author:     Matthew Aubert, @aubsec, aubsec@gmail.com
 
 Description:
 
