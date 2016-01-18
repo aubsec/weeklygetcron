@@ -95,7 +95,6 @@ def exceptionHandler(errorValue, function):
     print('[!] ' + str(errorValue))
     return 0
 
-
 def main():
     try:
         returnValue = 0
