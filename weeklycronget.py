@@ -20,18 +20,13 @@
 import urllib.request
 import zipfile
 import os
-
-#exceptionHandler() collects error codes and prints to screen
-def exceptionHandler(errorValue, function):
-    print('[!] An error has occured in function ' + str(function))
-    print('[!] ' + str(errorValue))
-    return 0
+import time
 
 #Generic unzip function.
-def unzip(fileName):
+def unzip(fileName, directory):
     try:
         readFile = zipfile.ZipFile(fileName, 'r')
-        zipfile.ZipFile.extractall(readFile)
+        readFile.extractall(directory)
         readFile.close()
         return 0
     except Exception as errorValue:
@@ -40,14 +35,14 @@ def unzip(fileName):
         return 1
 
 #getNSRL() retrieves minimal NSRL from zip and extracts file to pwd
-def getNSRL():
+def getNSRL(directory):
     try:
-        fileName = '/tmp/nsrl.zip' #Work on fixing this so it is OS agnostic
+        fileName = directory + '/nsrl.zip' 
         print('[+] Starting download of NSRL')
         url = 'http://www.nsrl.nist.gov/RDS/rds_2.50/rds_250m.zip' #Verify that the URL remains static.
         response = urllib.request.urlretrieve(url, fileName)
-        print('[+] NSRL downloaded to /tmp/\n[+] Beginning unzip to pwd')
-        unzip(fileName)
+        print('[+] NSRL downloaded to ' + directory + '/\n[+] Beginning unzip to ' + directory + '/')
+        unzip(fileName, directory)
         os.remove(fileName)
         print('[+] Download and unzip of NSRL was sucessful.')
         return 0
@@ -56,17 +51,64 @@ def getNSRL():
         exceptionHandler(errorValue, function)
         return 1
 
-#WIP getMcAfeeDAT() parses gdeltaavv.ini, finds the current version,
-#and downloads the lastest DAT version to the pwd.
-def getMcAfeeDAT():
+#getMcAfeeDAT() parses gdeltaavv.ini, finds the current version,
+#and downloads the lastest DAT version to the 'dir'.
+def getMcAfeeDAT(directory):
     #http://update.nai.com/products/commonupdater/gdeltaavv.ini
+    try:
+        iniFileName = directory + '/mcafee.ini'
+        
+        print('[+] Starting download of McAfee VSE Update')
+        url = 'http://update.nai.com/products/commonupdater/gdeltaavv.ini'
+        urllib.request.urlretrieve(url, iniFileName)
+        
+        with open(iniFileName, 'r') as iniFile:
+            for line in iniFile:
+                if 'CurrentVersion' in line:
+                    ver = str(line[-5:])
+        
+        ver = str(ver.replace('\n', ''))
+        url = 'http://download.nai.com/products/licensed/superdat/english/intel/' + ver + 'xdat.exe'
+        fileName = directory + '/'  + ver + 'xdat.exe'
+        urllib.request.urlretrieve(url, fileName)
+        
+        print('[+] Download of McAfee VSE DAT ' + ver + ' was sucessful')
+        iniFile.close()
+        os.remove(iniFileName)
+        return 0
+    except Exception as errorValue:
+        function = 'getMcAfeeDAT()'
+        exceptionHandler(errorValue, function)
+        return 1
+
+def makeDir():
+    now = time.strftime('%Y%m%d')
+    cwd = os.getcwd()
+    directory = cwd + '/' + now
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+    return directory
+
+#exceptionHandler() collects error codes and prints to screen
+def exceptionHandler(errorValue, function):
+    print('[!] An error has occured in function ' + function)
+    print('[!] ' + str(errorValue))
     return 0
+
 
 def main():
     try:
         returnValue = 0
-        returnValue += getNSRL()
-        returnValue += getMcAfeeDAT()
+        try:
+            directory = makeDir()
+            print('[+] Directory ' + directory + '/ created')
+        except Exception as errorValue:
+            function = 'makeDir()'
+            exceptionHandler(errorValue, function)
+            returnValue += 1
+
+        returnValue += getNSRL(directory)
+        returnValue += getMcAfeeDAT(directory)
         if returnValue != 0:
             print('[!] Program completed with errors')
             exit(1)
@@ -81,4 +123,3 @@ def main():
 
 if __name__=='__main__':
     main()
-
