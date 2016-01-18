@@ -21,11 +21,11 @@ import urllib.request
 import zipfile
 import os
 
-#error() collects error codes and prints to screen
-def error(errorValue, function):
+#exceptionHandler() collects error codes and prints to screen
+def exceptionHandler(errorValue, function):
     print('[!] An error has occured in function ' + str(function))
-    print('[E] ' + str(errorValue))
-    exit(1)
+    print('[!] ' + str(errorValue))
+    return 0
 
 #Generic unzip function.
 def unzip(fileName):
@@ -33,37 +33,52 @@ def unzip(fileName):
         readFile = zipfile.ZipFile(fileName, 'r')
         zipfile.ZipFile.extractall(readFile)
         readFile.close()
-        return
-    except Exception as e:
-        errorValue = e.value
+        return 0
+    except Exception as errorValue:
         function = 'unzip()'
-        error(errorValue, function)
+        exceptionHandler(errorValue, function)
+        return 1
 
-#getNSRL() retrieves minimal NSRL from zip and extracts file to cwd
+#getNSRL() retrieves minimal NSRL from zip and extracts file to pwd
 def getNSRL():
     try:
-        fileName = '/tmp/nsrl.zip'
+        fileName = '/tmp/nsrl.zip' #Work on fixing this so it is OS agnostic
         print('[+] Starting download of NSRL')
-        url = 'http://www.nsrl.nist.gov/RDS/rds_2.50/rds_250m.zip'
+        url = 'http://www.nsrl.nist.gov/RDS/rds_2.50/rds_250m.zip' #Verify that the URL remains static.
         response = urllib.request.urlretrieve(url, fileName)
-        print('[+] NSRL downloaded to /tmp/\n[+] Beginning unzip to cwd')
+        print('[+] NSRL downloaded to /tmp/\n[+] Beginning unzip to pwd')
         unzip(fileName)
         os.remove(fileName)
-        sucess = '[+] Download and unzip of NSRL was sucessful.'
-        return sucess
-    except Exception as e:
-        errorValue = e.value
+        print('[+] Download and unzip of NSRL was sucessful.')
+        return 0
+    except Exception as errorValue:
         function = 'getNSRL()'
-        error(errorValue, function)
+        exceptionHandler(errorValue, function)
+        return 1
+
+#WIP getMcAfeeDAT() parses gdeltaavv.ini, finds the current version,
+#and downloads the lastest DAT version to the pwd.
+def getMcAfeeDAT():
+    #http://update.nai.com/products/commonupdater/gdeltaavv.ini
+    return 0
 
 def main():
     try:
-        print(getNSRL())
-        exit(0)
-    except Exception as e:
-        errorValue = e.value
+        returnValue = 0
+        returnValue += getNSRL()
+        returnValue += getMcAfeeDAT()
+        if returnValue != 0:
+            print('[!] Program completed with errors')
+            exit(1)
+        else:
+            print('[+] Program completed sucessfully')
+            exit(0)
+    except Exception as errorValue:
         function = 'main()'
-        error(errorValue, function)
+        exceptionHandler(errorValue, function)
+        print('[!] Program completed with errors')
+        exit(1)
 
 if __name__=='__main__':
     main()
+
