@@ -22,46 +22,15 @@ import zipfile
 import os
 import time
 
-#Generic unzip function.
-def unzip(fileName, directory):
-    try:
-        readFile = zipfile.ZipFile(fileName, 'r')
-        readFile.extractall(directory)
-        readFile.close()
-        return 0
-    except Exception as errorValue:
-        function = 'unzip()'
-        exceptionHandler(errorValue, function)
-        return 1
-
-#getNSRL() retrieves minimal NSRL from zip and extracts file to pwd
-def getNSRL(directory):
-    try:
-        fileName = directory + '/nsrl.zip' 
-        print('[+] Starting download of NSRL')
-        url = 'http://www.nsrl.nist.gov/RDS/rds_2.50/rds_250m.zip' #Verify that the URL remains static.
-        response = urllib.request.urlretrieve(url, fileName)
-        print('[+] NSRL downloaded to ' + directory + '/\n[+] Beginning unzip to ' + directory + '/')
-        unzip(fileName, directory)
-        os.remove(fileName)
-        print('[+] Download and unzip of NSRL was sucessful.')
-        return 0
-    except Exception as errorValue:
-        function = 'getNSRL()'
-        exceptionHandler(errorValue, function)
-        return 1
-
 #getMcAfeeDAT() parses gdeltaavv.ini, finds the current version,
 #and downloads the lastest DAT version to the 'dir'.
 def getMcAfeeDAT(directory):
     #http://update.nai.com/products/commonupdater/gdeltaavv.ini
     try:
         iniFileName = directory + '/mcafee.ini'
-        
         print('[+] Starting download of McAfee VSE Update')
         url = 'http://update.nai.com/products/commonupdater/gdeltaavv.ini'
         urllib.request.urlretrieve(url, iniFileName)
-        
         with open(iniFileName, 'r') as iniFile:
             for line in iniFile:
                 if 'CurrentVersion' in line:
@@ -71,7 +40,6 @@ def getMcAfeeDAT(directory):
         url = 'http://download.nai.com/products/licensed/superdat/english/intel/' + ver + 'xdat.exe'
         fileName = directory + '/'  + ver + 'xdat.exe'
         urllib.request.urlretrieve(url, fileName)
-        
         print('[+] Download of McAfee VSE DAT ' + ver + ' was sucessful')
         iniFile.close()
         os.remove(iniFileName)
@@ -81,6 +49,54 @@ def getMcAfeeDAT(directory):
         exceptionHandler(errorValue, function)
         return 1
 
+#getNSRL() retrieves minimal NSRL from zip and extracts file to pwd
+def getNSRL(directory):
+    try:
+        fileName = directory + '/nsrl.zip' 
+        print('[+] Starting download of NSRL')
+        url = 'http://www.nsrl.nist.gov/RDS/rds_2.50/rds_250m.zip' #The version number does change.  Modify to parse version number before downloading
+        response = urllib.request.urlretrieve(url, fileName)
+        print('[+] NSRL downloaded to ' + directory) # + '/\n[+] Beginning unzip to ' + directory + '/')
+        #Keeping file compressed for now.  
+        #unzip(fileName, directory) 
+        #os.remove(fileName)
+        print('[+] Download of NSRL was sucessful.')
+        return 0
+    except Exception as errorValue:
+        function = 'getNSRL()'
+        exceptionHandler(errorValue, function)
+        return 1
+
+#getNSRLEncase() retrieves the Encase version of the NSRL in zip format.
+def getNSRLEncase(directory):
+    try:
+        fileName = directory + '/NRL_Encase_Unified.zip'
+        print('[+] Starting download of NSRL Encase')
+        url = 'http://www.nsrl.nist.gov/RDS/rds_2.50/Encase_Unified_rds_250.zip'
+        response = urllib.request.urlretrieve(url, fileName)
+        print('[+] Download of NSRL Encase format is complete')
+        return 0
+    except Exception as errorValue:
+        function = 'getNSRLEncase()'
+        exceptionHander(errorValue, function)
+        return 1
+
+#getSnort() downloads the community Snort rules.
+def getSnort(directory):
+    try:
+        fileName = directory + '/snortrules-snapshot.2962.tar.gz'
+        print('[+] Starting download of Snort community rules')
+        url = 'https://snort.org/rules/snortrules-snapshot-2962.tar.gz?oinkcode=ce600e851dbd2f74c3ee671c9f10522d8eab909f'
+        response = urllib.request.urlretrieve(url, fileName)
+        #In later itteration, have the rules automatically unpacked to appropriate location.  
+        print('[+] Download of Snort Community Rules complete')
+        return 0
+    except Exception as errorValue:
+        function = 'getSnort()'
+        exceptionHander(errorValue, function)
+        return 1
+
+#Creates directory for output
 def makeDir():
     now = time.strftime('%Y%m%d')
     cwd = os.getcwd()
@@ -95,6 +111,20 @@ def exceptionHandler(errorValue, function):
     print('[!] ' + str(errorValue))
     return 0
 
+#Generic unzip function.
+def unzip(fileName, directory):
+    try:
+        readFile = zipfile.ZipFile(fileName, 'r')
+        readFile.extractall(directory)
+        readFile.close()
+        return 0
+    except Exception as errorValue:
+        function = 'unzip()'
+        exceptionHandler(errorValue, function)
+        return 1
+
+
+# Main
 def main():
     try:
         returnValue = 0
@@ -105,9 +135,10 @@ def main():
             function = 'makeDir()'
             exceptionHandler(errorValue, function)
             returnValue += 1
-
         returnValue += getNSRL(directory)
+        returnValue += getNSRLEncase(directory)
         returnValue += getMcAfeeDAT(directory)
+        returnValue += getSnort(directory)
         if returnValue != 0:
             print('[!] Program completed with errors')
             exit(1)
